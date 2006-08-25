@@ -14,9 +14,9 @@ module ActionController
       def cache_erb_fragment_with_expiry(block, name = {}, options = nil, expiry = nil)
         unless perform_caching then block.call; return end
 
-        when_fragment_expired name, expiry do
-          expire_fragment(name)
-        end      
+        if expiry && fragment_expired?(name)
+          expire_and_write_meta(name, expiry)  
+        end
         
         cache_erb_fragment_without_expiry(block, name, options)          
       end
@@ -27,7 +27,7 @@ module ActionController
       end
     
       def read_meta_fragment(name)
-        YAML.load(read_fragment(meta_fragment_key(name))) rescue {}
+        YAML.load(read_fragment(meta_fragment_key(name))) rescue nil
       end    
     
       def write_meta_fragment(name, meta)
@@ -41,8 +41,13 @@ module ActionController
       def when_fragment_expired(name, expiry=nil)
         if fragment_expired? name
           yield
-          write_meta_fragment(name, expiry)          
+          expire_and_write_meta(name, expiry)
         end
+      end
+    
+      def expire_and_write_meta(name, expiry)
+        expire_fragment(name)
+        write_meta_fragment(name, expiry) if expiry
       end
     
     end
