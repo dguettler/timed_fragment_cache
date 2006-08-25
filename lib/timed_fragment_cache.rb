@@ -39,10 +39,10 @@ module ActionController
       end
     
       def when_fragment_expired(name, expiry=nil)
-        if fragment_expired? name
-          yield
-          expire_and_write_meta(name, expiry)
-        end
+        return unless fragment_expired? name
+        
+        yield
+        expire_and_write_meta(name, expiry)
       end
     
       def expire_and_write_meta(name, expiry)
