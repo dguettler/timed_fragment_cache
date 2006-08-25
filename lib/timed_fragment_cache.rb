@@ -1,7 +1,28 @@
-# based on http://www.typosphere.org/trac/browser/trunk/vendor/plugins/expiring_action_cache/lib/metafragment.rb
-
 module ActionController
   module Caching
+  
+    # Timed Fragment Caching
+    # Adds optional expiry to fragment caching which will cache that fragment for the alloted time
+    # Works by adding a 'meta' fragment for each timed fragment (inspired by metafragment code in typo
+    # http://www.typosphere.org/trac/browser/trunk/vendor/plugins/expiring_action_cache/lib/metafragment.rb)
+    # 
+    # Works something like this:
+    #
+    # <% cache 'fragment_name', 10.minutes.from_now do %>
+    #  the cached fragment which does something intensive
+    # <% end %>
+    #
+    # This will be cached for 10 minutes before it expires
+    #
+    # Also adds when_fragment_expired which you can use to only execute code if the fragment is not cached, or has
+    # expired:
+    #
+    # when_fragment_expired 'fragment_name', 10.minutes_from_now do 
+    #  # some intensive code
+    # end
+    #
+    # Note that if using the 'when_fragment_expired' in the controller, you don't need the expiry in the call to cache
+    # in the template, as 'when_fragment_expired' will expire the fragment for you.
     module TimedFragment
     
       def self.included(base) # :nodoc:     
@@ -10,7 +31,7 @@ module ActionController
           alias_method :cache_erb_fragment, :cache_erb_fragment_with_expiry
         end      
       end
-      
+            
       def cache_erb_fragment_with_expiry(block, name = {}, options = nil, expiry = nil)
         unless perform_caching then block.call; return end
 
